@@ -22,6 +22,8 @@ export default function FlightSidebar() {
   const clearSelection = useFlightStore((s) => s.clearSelection);
   const [photoUrl, setPhotoUrl] = useState(null);
   const [photographer, setPhotographer] = useState(null);
+  const [routeOrigin, setRouteOrigin] = useState({ iata: 'ORG', city: 'ORIGIN' });
+  const [routeDest, setRouteDest] = useState({ iata: 'DST', city: 'DESTINATION' });
 
   useEffect(() => {
     if (!selectedAircraft?.icao24) {
@@ -47,9 +49,38 @@ export default function FlightSidebar() {
         setPhotographer(null);
       }
     };
+    
+    const fetchRoute = async () => {
+      setRouteOrigin({ iata: '---', city: 'ORIGIN' });
+      setRouteDest({ iata: '---', city: 'DESTINATION' });
+      if (!selectedAircraft.callsign) return;
+      try {
+        const callsign = selectedAircraft.callsign.trim();
+        const routeRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.flightradar24.com/common/v1/flight/list.json?query=${callsign}`)}`);
+        const routeData = await routeRes.json();
+        if (routeData.result?.response?.data?.length > 0) {
+          const flightData = routeData.result.response.data[0];
+          if (flightData.airport?.origin) {
+            setRouteOrigin({ 
+              iata: flightData.airport.origin.code.iata || '---', 
+              city: flightData.airport.origin.pluginData?.details?.name || flightData.airport.origin.name || 'Unknown'
+            });
+          }
+          if (flightData.airport?.destination) {
+            setRouteDest({ 
+              iata: flightData.airport.destination.code.iata || '---', 
+              city: flightData.airport.destination.pluginData?.details?.name || flightData.airport.destination.name || 'Unknown'
+            });
+          }
+        }
+      } catch(e) {
+        console.warn("Failed to fetch route data");
+      }
+    };
 
     fetchPhoto();
-  }, [selectedAircraft?.icao24]);
+    fetchRoute();
+  }, [selectedAircraft?.icao24, selectedAircraft?.callsign]);
 
   if (!selectedAircraft) return null;
 
@@ -88,22 +119,21 @@ export default function FlightSidebar() {
         )}
       </div>
 
-      {/* ROUTE INFO (Simulated) */}
+      {/* ROUTE INFO (Dynamic) */}
       <div className="sidebar-progress-section">
         <div className="route-row">
           <div className="route-airport">
-            <span className="route-code">ORG</span>
-            <span className="route-city">ORIGIN</span>
+            <span className="route-code">{routeOrigin.iata}</span>
+            <span className="route-city">{routeOrigin.city}</span>
           </div>
           <div className="route-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" style={{display: "none"}}></path>
               <path fill="currentColor" stroke="none" d="M12.35 15.65c-.32 1.44-1.39 2.5-2.83 2.82l-5.06-5.06L20 8l-5.41-5.41a6 6 0 00-8.48 0L2 6.7A6 6 0 002.32 15h.6a2 2 0 002-2v-1.3a6 6 0 001.3-.87l-4.7 4.72a6 6 0 000 8.48l1.41 1.41a6 6 0 008.48 0l4.31-4.31a6 6 0 00.32-8.15l-1.42 1.42a4 4 0 011.02 2.39L12.35 15.65z"/>
             </svg>
           </div>
           <div className="route-airport">
-            <span className="route-code">DST</span>
-            <span className="route-city">DESTINATION</span>
+            <span className="route-code">{routeDest.iata}</span>
+            <span className="route-city">{routeDest.city}</span>
           </div>
         </div>
       </div>

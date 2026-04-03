@@ -1,62 +1,57 @@
 .fr24-layout {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; /* Let map clicks pass through */
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: #fff;
-  z-index: 50; /* Above the map */
 }
 
-/* Make all UI panels clickable */
-.fr24-layout > * {
-  pointer-events: auto;
-}
-
-/* --- HEADER --- */
+/* TOP HEADER */
 .fr24-header {
   position: absolute;
-  top: 0;
-  width: 100%;
+  top: 0; left: 0; right: 0;
   height: 56px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 0 16px;
-  font-size: 13px;
+  pointer-events: auto;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: flex-end;
 }
 
+/* ... keep existing styles for desktop ... */
+
 .fr24-logo-container {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
-  justify-content: center;
 }
 
 .fr24-logo-text {
-  font-size: 20px;
-  font-weight: 700;
   display: flex;
   flex-direction: column;
   line-height: 1;
 }
 
-.fr24-logo-sub {
-  color: #facc15;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
+.fr24-logo-text span:first-child {
+  color: white;
+  font-weight: 800;
+  font-size: 16px;
 }
 
-.fr24-time {
-  margin-right: 16px;
-  font-weight: 500;
+.fr24-logo-sub {
+  color: #facc15;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
 }
 
 .fr24-header-right {
@@ -65,81 +60,83 @@
   gap: 16px;
 }
 
+.fr24-time {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .fr24-search {
-  background: white;
-  border-radius: 4px;
-  height: 32px;
-  width: 260px;
   display: flex;
   align-items: center;
-  padding: 0 8px;
-  color: #666;
+  background: white;
+  border-radius: 4px;
+  padding: 0 12px;
+  height: 32px;
+  width: 240px;
 }
 
 .fr24-search input {
-  border: none;
   background: transparent;
-  width: 100%;
-  padding-left: 8px;
-  font-size: 13px;
+  border: none;
   outline: none;
+  color: #333;
+  margin-left: 8px;
+  width: 100%;
+  font-size: 13px;
 }
 
 .fr24-login {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  font-size: 10px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.fr24-view-toggle {
-  position: absolute;
-  top: 60px;
-  right: 16px;
-  background: rgba(43, 43, 43, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 6px 12px;
-  border-radius: 20px;
+  gap: 6px;
+  color: #cbd5e1;
   font-size: 12px;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
 }
 
-/* --- LEFT PANELS --- */
+.fr24-login:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* LEFT PANELS */
 .fr24-left-panels {
   position: absolute;
-  top: 16px;
+  top: 72px; /* below header */
   left: 16px;
-  width: 280px;
+  width: 320px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  pointer-events: auto;
 }
 
 .fr24-panel {
-  background: rgba(51, 51, 51, 0.95);
-  border: 1px solid #444;
-  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 6px;
   overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .fr24-panel-header {
-  padding: 10px 12px;
+  padding: 12px 16px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  font-size: 13px;
-  font-weight: 600;
+  align-items: center;
   cursor: pointer;
-  background: #333;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .fr24-panel-header:hover {
-  background: #444;
+  background: rgba(255,255,255,0.05);
 }
 
 .panel-title-wrap {
@@ -150,22 +147,18 @@
 
 .live-badge {
   background: #eab308;
-  color: black;
+  color: #000;
   font-size: 9px;
+  font-weight: 800;
   padding: 2px 4px;
   border-radius: 2px;
-  font-weight: 700;
 }
 
-.bookmarks-content {
-  background: #2b2b2b;
-  padding: 0;
-}
-
+/* BOOKMARKS CONTENT */
 .bookmarks-tabs {
   display: flex;
-  border-bottom: 1px solid #444;
-  background: #333;
+  border-bottom: 1px solid #334155;
+  background: rgba(0,0,0,0.2);
 }
 
 .bookmarks-tab {
@@ -173,106 +166,186 @@
   text-align: center;
   padding: 10px 0;
   font-size: 12px;
-  color: #aaa;
+  color: #94a3b8;
   cursor: pointer;
+  font-weight: 500;
 }
 
-.bookmarks-tab.active {
-  color: #eab308;
-  border-bottom: 2px solid #eab308;
-}
-
-.bookmarks-body {
-  padding: 16px;
-  text-align: center;
-  font-size: 12px;
-  color: #ddd;
-  line-height: 1.5;
-}
-
-.trial-btn {
-  background: #4ade80;
-  color: black;
-  width: 100%;
-  border: none;
-  padding: 10px;
-  border-radius: 4px;
-  font-weight: 600;
-  margin-top: 10px;
-  cursor: pointer;
-}
-
-.add-bookmark-btn {
-  background: transparent;
-  color: #ccc;
-  border: none;
-  width: 100%;
-  padding: 10px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 5px;
-  cursor: pointer;
-}
-
-.add-bookmark-btn:hover {
+.bookmarks-tab:hover {
   color: white;
 }
 
-/* --- BOTTOM PILL --- */
+.bookmarks-tab.active {
+  color: white;
+  border-bottom: 2px solid #3b82f6;
+  background: rgba(255,255,255,0.05);
+}
+
+.bookmarks-body {
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+}
+
+.add-bookmark-btn {
+  background: white;
+  color: #0f172a;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.add-bookmark-btn:hover {
+  background: #f8fafc;
+}
+
+.fr24-view-toggle {
+  position: absolute;
+  top: 72px;
+  right: 16px;
+  background: rgba(15, 23, 42, 0.9);
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+}
+
+/* BOTTOM PILL MENU */
 .fr24-bottom-container {
   position: absolute;
-  bottom: 20px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  pointer-events: auto;
 }
 
 .add-coverage-btn {
-  background: #2563eb;
+  background: rgba(15, 23, 42, 0.9);
   color: white;
-  border: none;
-  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
   padding: 6px 16px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
 }
 
 .fr24-bottom-pill {
-  background: rgba(43, 43, 43, 0.95);
-  border: 1px solid #444;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 30px;
   display: flex;
-  padding: 6px 16px;
-  gap: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .pill-btn {
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  color: #cbd5e1;
+  padding: 10px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  color: #ccc;
   cursor: pointer;
-  background: transparent;
-  border: none;
+}
+
+.pill-btn:last-child {
+  border-right: none;
 }
 
 .pill-btn:hover {
+  background: rgba(255,255,255,0.1);
   color: white;
 }
 
 .pill-btn span {
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+
+/* ========================================================
+   MOBILE RESPONSIVE OVERHAUL (max-width: 768px)
+   ======================================================== */
+@media (max-width: 768px) {
+  /* Restructure Header */
+  .fr24-header {
+    justify-content: space-between;
+    padding: 0 8px;
+  }
+  
+  /* Hide the time clock and collapse logo text on very small screens to save space */
+  .fr24-time {
+    display: none;
+  }
+  
+  .fr24-logo-container {
+    position: static;
+    transform: none;
+  }
+  
+  /* Make the search bar expanding */
+  .fr24-search {
+    width: 45%; 
+    flex-grow: 1;
+    margin: 0 8px;
+  }
+  
+  /* Hide the Left Panels completely on mobile */
+  .fr24-left-panels {
+    display: none;
+  }
+  
+  /* Hide the top-right view toggle */
+  .fr24-view-toggle {
+    display: none;
+  }
+  
+  /* Shrink the bottom pill so it fits horizontally without overflowing */
+  .fr24-bottom-container {
+    bottom: 12px;
+    width: 95%;
+  }
+  
+  .fr24-bottom-pill {
+    width: 100%;
+    justify-content: space-between;
+    overflow-x: auto;
+    border-radius: 12px;
+  }
+  
+  .pill-btn {
+    padding: 8px 12px;
+  }
+
+  .add-coverage-btn {
+    display: none;
+  }
 }

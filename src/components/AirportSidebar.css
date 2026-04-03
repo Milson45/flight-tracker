@@ -1,0 +1,166 @@
+.airport-sidebar {
+  position: absolute;
+  top: 72px;
+  right: 16px;
+  bottom: 24px;
+  width: 380px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  
+  /* Slide in animation */
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.airport-tabs {
+  display: flex;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid #334155;
+}
+
+.airport-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 0;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.airport-tab:hover {
+  color: white;
+}
+
+.airport-tab.active {
+  color: white;
+  border-bottom-color: #38bdf8;
+  background: rgba(255,255,255,0.05);
+}
+
+.schedule-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.schedule-state-msg {
+  padding: 32px;
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pulsing-dot {
+  width: 8px; height: 8px;
+  background: #38bdf8;
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  gap: 16px;
+}
+
+.schedule-row:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.schedule-time {
+  font-family: 'JetBrains Mono', monospace;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 55px;
+}
+
+.schedule-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.flight-id-peer {
+  display: flex;
+  align-items: center;
+}
+
+.flight-number {
+  color: #eab308;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.flight-peer {
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.flight-airline {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.schedule-status {
+  text-align: right;
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  max-width: 90px;
+  line-height: 1.2;
+}
+
+.status-delayed {
+  color: #ef4444; /* red */
+}
+
+.status-good {
+  color: #22c55e; /* green */
+}
+
+/* ========================================================
+   MOBILE RESPONSIVE OVERHAUL (max-width: 768px)
+   ======================================================== */
+@media (max-width: 768px) {
+  /* Turn the sidebar into a bottom sheet overlay */
+  .airport-sidebar {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: 75%;  /* Covers bottom 75% of screen */
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+    animation: slideUpBottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 9999;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+}

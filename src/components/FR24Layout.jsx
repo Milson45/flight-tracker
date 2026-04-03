@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import useFlightStore from '../store/flightStore';
+import LoginModal from './LoginModal';
+import { auth, signOut } from '../services/firebase';
 import './FR24Layout.css';
 
 export default function FR24Layout() {
+  // Authentication UI State
+  const [showLogin, setShowLogin] = useState(false);
+  const user = useFlightStore(s => s.user);
+
   // State to track which accordion panel is open
   const [expandedPanel, setExpandedPanel] = useState('tracked');
   const [activeTab, setActiveTab] = useState('Aircraft');
@@ -23,20 +29,79 @@ export default function FR24Layout() {
 
   // Search logic
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const aircraftList = useFlightStore(s => s.aircraft);
   const selectAircraftByIcao = useFlightStore(s => s.selectAircraftByIcao);
-  
-  const searchResults = searchQuery.length > 1 
-    ? aircraftList.filter(a => 
-        (a.callsign && a.callsign.toUpperCase().includes(searchQuery.toUpperCase())) ||
-        (a.registration && a.registration.toUpperCase().includes(searchQuery.toUpperCase())) ||
-        (a.icao24 && a.icao24.toUpperCase().includes(searchQuery.toUpperCase()))
-      ).slice(0, 5) // cap at 5 results
-    : [];
+  const setFlyToTarget = useFlightStore(s => s.setFlyToTarget);
+  const selectAirport = useFlightStore(s => s.selectAirport);
+  const setUser = useFlightStore(s => s.setUser);
 
-  const handleSelectResult = (icao) => {
-    selectAircraftByIcao(icao);
-    setSearchQuery('');
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      let results = [];
+      const queryUpper = searchQuery.toUpperCase();
+
+      // 1. Local Flights (Instant)
+      const localMatches = aircraftList.filter(a => 
+        (a.callsign && a.callsign.toUpperCase().includes(queryUpper)) ||
+        (a.registration && a.registration.toUpperCase().includes(queryUpper)) ||
+        (a.icao24 && a.icao24.toUpperCase().includes(queryUpper))
+      ).slice(0, 3).map(a => ({
+        id: a.icao24,
+        title: a.callsign || a.registration || a.icao24,
+        subtitle: `Local Flight • ${a.aircraftType || 'Unknown Aircraft'}`,
+        action: () => {
+          selectAircraftByIcao(a.icao24);
+          setSearchQuery('');
+        }
+      }));
+      results = [...results, ...localMatches];
+
+      // 2. Global Airports via Nominatim OpenStreetMap API
+      try {
+        const airportRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery + ' airport')}&format=json&limit=3`, {
+          headers: { 'User-Agent': 'SkyMap-FlightTracker/1.0' }
+        });
+        if (airportRes.ok) {
+          const airportData = await airportRes.json();
+          const airportMatches = airportData.map(apt => {
+            // Attempt to extract a 3-letter IATA code if it's in the name (e.g. "JFK, John F Kennedy...", "London Heathrow (LHR)")
+            const iataMatch = apt.display_name.match(/\b([A-Z]{3})\b/);
+            const iata = iataMatch ? iataMatch[1] : (apt.name.substring(0,3).toUpperCase());
+            const cityName = apt.display_name.split(',').slice(-1)[0].trim();
+            const fullName = apt.name || apt.display_name.split(',')[0];
+
+            return {
+              id: apt.place_id,
+              title: fullName,
+              subtitle: `Airport • ${cityName}`,
+              action: () => {
+                setFlyToTarget({ longitude: parseFloat(apt.lon), latitude: parseFloat(apt.lat), zoom: 13 });
+                // We dispatch the new selected airport object!
+                selectAirport({ iata, city: cityName, name: fullName });
+                setSearchQuery('');
+              }
+            };
+          });
+          results = [...results, ...airportMatches];
+        }
+      } catch(e) {
+        console.warn("Airport search failed", e);
+      }
+
+      setSearchResults(results);
+    }, 500); // 500ms debounce to prevent spamming the geocoding API
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, aircraftList, selectAircraftByIcao, setFlyToTarget, selectAirport]);
+
+  const handleSelectResult = (result) => {
+    result.action();
   };
 
   const filters = useFlightStore(s => s.filters);
@@ -164,14 +229,14 @@ export default function FR24Layout() {
               <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', color: '#333', borderRadius: '4px', marginTop: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
                 {searchResults.map(res => (
                   <div 
-                    key={res.icao24}
-                    onClick={() => handleSelectResult(res.icao24)}
-                    style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between' }}
+                    key={res.id}
+                    onClick={() => handleSelectResult(res)}
+                    style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #eee', display: 'flex', flexDirection: 'column' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                   >
-                    <span style={{ fontWeight: '600' }}>{res.callsign || res.registration || 'Unknown'}</span>
-                    <span style={{ color: '#64748b' }}>{res.aircraftType}</span>
+                    <span style={{ fontWeight: '600', fontSize: '14px' }}>{res.title}</span>
+                    <span style={{ color: '#64748b', fontSize: '11px' }}>{res.subtitle}</span>
                   </div>
                 ))}
               </div>
@@ -182,10 +247,30 @@ export default function FR24Layout() {
               </div>
             )}
           </div>
-          <div className="fr24-login">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            LOG IN
-          </div>
+          {user ? (
+            <div className="fr24-login" onClick={() => {
+              if (window.confirm("Do you want to log out?")) {
+                signOut(auth).then(() => useFlightStore.getState().setUser(null));
+              }
+            }} style={{ padding: '4px 8px', gap: '8px' }}>
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="Avatar" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+              ) : (
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                  {user.displayName ? user.displayName.charAt(0) : 'U'}
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'white' }}>{user.displayName?.split(' ')[0] || 'User'}</span>
+                <span style={{ fontSize: '9px', color: '#94a3b8' }}>Sign out</span>
+              </div>
+            </div>
+          ) : (
+            <div className="fr24-login" onClick={() => setShowLogin(true)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              LOG IN
+            </div>
+          )}
         </div>
       </div>
       
@@ -228,6 +313,8 @@ export default function FR24Layout() {
           </button>
         </div>
       </div>
+
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </div>
   );
 }

@@ -109,6 +109,7 @@ function adsbProxyPlugin() {
   };
 }
 
+// Force Vite restart to load .env variables
 export default defineConfig({
   plugins: [
     adsbProxyPlugin(),

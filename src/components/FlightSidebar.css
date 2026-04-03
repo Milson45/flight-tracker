@@ -1,78 +1,66 @@
-/* ============================================================
-   FlightSidebar — FlightRadar24 UI Clone
-   ============================================================ */
-
 .flight-sidebar {
   position: absolute;
-  top: 60px; /* Below the top header */
-  bottom: 0px;
-  right: 0px;
-  width: 360px;
-  background-color: #f1f5f9;
-  box-shadow: -5px 0 20px rgba(0, 0, 0, 0.4);
+  top: 72px;
+  right: 16px;
+  bottom: 24px;
+  width: 380px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  color: #1e293b;
   overflow-y: auto;
-  overflow-x: hidden;
-  z-index: 100;
+  pointer-events: auto;
+  
+  /* Slide in animation */
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(120%); opacity: 0; }
+  from { transform: translateX(110%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* ── HEADER (Dark Theme) ── */
+/* Sidebar internals */
+/* ... same as previous */
 .sidebar-header {
-  background-color: #272727;
-  color: white;
   padding: 16px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0) 100%);
 }
 
 .sidebar-header-top {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  align-items: flex-start;
 }
 
 .callsign-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .sidebar-callsign {
+  color: white;
   font-size: 24px;
-  font-weight: 700;
-  color: #facc15; /* Yellow */
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .sidebar-badge {
-  background-color: #f1f5f9;
-  color: #334155;
+  background: #334155;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 13px;
-  font-weight: 600;
 }
 
 .badge-blue {
-  background-color: #2563eb;
-  color: white;
-}
-
-.sidebar-airline {
-  font-size: 16px;
-  font-weight: 500;
-  color: #f8fafc;
+  background: #2563eb;
 }
 
 .sidebar-close {
@@ -81,23 +69,26 @@
   color: #94a3b8;
   cursor: pointer;
   padding: 4px;
-  transition: color 0.2s;
+  border-radius: 4px;
 }
 
 .sidebar-close:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: white;
 }
 
-/* ── AIRCRAFT PHOTO ── */
+.sidebar-airline {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* Photo */
 .sidebar-photo-container {
-  width: 100%;
   height: 200px;
-  background-color: #cbd5e1;
+  background: #000;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
 }
 
 .sidebar-photo {
@@ -107,23 +98,27 @@
 }
 
 .photo-placeholder {
-  color: #64748b;
-  font-size: 14px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  font-size: 12px;
   font-weight: 500;
 }
 
-/* ── PROGRESS SECTION ── */
+/* Progress Section */
 .sidebar-progress-section {
   padding: 20px 16px;
-  background-color: white;
-  border-bottom: 4px solid #facc15; /* Yellow progress indicator */
+  border-bottom: 4px solid #1e293b;
 }
 
 .route-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  text-align: center;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
 .route-airport {
@@ -131,96 +126,116 @@
   flex-direction: column;
 }
 
+.route-airport:last-child {
+  text-align: right;
+}
+
 .route-code {
-  font-size: 32px;
-  font-weight: 300;
-  color: #1e293b;
+  color: white;
+  font-size: 28px;
+  font-weight: 800;
 }
 
 .route-city {
+  color: #94a3b8;
   font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
+  font-weight: 500;
   text-transform: uppercase;
-  margin-top: 4px;
 }
 
 .route-icon {
-  color: #facc15; /* Yellow airplane icon */
-  background: #f8fafc;
-  border-radius: 50%;
-  padding: 12px;
+  color: #facc15;
 }
 
-/* ── MORE INFO ── */
 .more-info-bar {
-  background-color: #3b82f6;
-  color: white;
   padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 500;
-  font-size: 14px;
+  color: #38bdf8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-/* ── DETAILS SECTION ── */
+.more-info-bar:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Details Section */
 .details-section {
-  padding: 0;
-  background-color: white;
-  flex-grow: 1;
+  padding: 16px;
 }
 
 .details-row {
   display: flex;
-  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 24px;
 }
 
 .details-icon-col {
-  padding: 20px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  width: 40px;
   color: #64748b;
+  padding-top: 4px;
 }
 
 .details-content-col {
   flex: 1;
-  padding: 20px 16px 20px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .details-label {
-  font-size: 11px;
-  text-transform: uppercase;
   color: #64748b;
+  font-size: 11px;
   font-weight: 600;
-  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
 }
 
 .details-value {
+  color: white;
   font-size: 15px;
-  color: #0f172a;
   font-weight: 500;
+  /* Jetbrains mono for mechanical/instrument feel */
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
 }
 
-/* Multi-column grid */
 .details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  row-gap: 16px;
 }
 
-/* ── SCROLLBAR ── */
-.flight-sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-.flight-sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.flight-sidebar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
+
+/* ========================================================
+   MOBILE RESPONSIVE OVERHAUL (max-width: 768px)
+   ======================================================== */
+@media (max-width: 768px) {
+  /* Turn the sidebar into a bottom sheet overlay */
+  .flight-sidebar {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: 70%;  /* Covers bottom 70% of screen */
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+    animation: slideUpBottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 9999;
+  }
+
+  @keyframes slideUpBottom {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* Shrink header fonts for smaller screens */
+  .sidebar-callsign {
+    font-size: 20px;
+  }
+  
+  .sidebar-photo-container {
+    height: 140px; /* smaller photo height on mobile */
+  }
 }

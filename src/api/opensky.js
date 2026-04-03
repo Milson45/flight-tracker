@@ -14,6 +14,8 @@
    of the viewport and a radius that covers the visible area.
    ============================================================ */
 
+import { getAircraftFullName } from '../utils/aircraftDictionary';
+
 /**
  * Parse an adsb.lol aircraft object into our standard format.
  * The adsb.lol response uses different field names than OpenSky,
@@ -25,7 +27,7 @@ function parseAircraft(ac) {
     callsign: ac.flight ? ac.flight.trim() : (ac.r || 'N/A'),
     originCountry: '', // adsb.lol doesn't provide origin country directly
     registration: ac.r || null,
-    aircraftType: ac.t || null,
+    aircraftType: getAircraftFullName(ac.t),
     timePosition: null,
     lastContact: null,
     longitude: ac.lon,

@@ -22,6 +22,8 @@ const useFlightStore = create((set, get) => ({
   // —— Selection State ——
   // The currently selected aircraft object, or null
   selectedAircraft: null,
+  // The currently selected airport object { iata, city }, or null
+  selectedAirport: null,
 
   // —— Map Viewport State ——
   // react-map-gl controlled viewport
@@ -32,6 +34,9 @@ const useFlightStore = create((set, get) => ({
     bearing: 0,
     pitch: 30,           // Slight pitch for that 3D avionics feel
   },
+  
+  // A transient target to force the map to pan to specific coordinates (e.g., from an airport search)
+  flyToTarget: null,
 
   // —— Bounding Box ——
   // Computed from the current map viewport corners.
@@ -45,12 +50,21 @@ const useFlightStore = create((set, get) => ({
     showOnGround: false,  // Toggle ground traffic visibility
   },
 
+  // —— User Session ——
+  user: null,
+  isAuthLoading: true, // While checking Firebase on initial load
+  
   // —— Connection Status ——
   connectionStatus: 'connecting', // 'connected' | 'connecting' | 'error' | 'demo'
   aircraftCount: 0,
   errorMessage: null,
 
   // —— Actions ——
+
+  setUser: (user) => set({
+    user,
+    isAuthLoading: false,
+  }),
 
   setAircraft: (aircraft) => set({
     aircraft,
@@ -63,11 +77,15 @@ const useFlightStore = create((set, get) => ({
     connectionStatus: isDemo ? 'demo' : 'connected',
   }),
 
-  selectAircraft: (aircraft) => set({ selectedAircraft: aircraft }),
+  selectAircraft: (aircraft) => set({ selectedAircraft: aircraft, selectedAirport: null }),
 
-  clearSelection: () => set({ selectedAircraft: null }),
+  selectAirport: (airport) => set({ selectedAirport: airport, selectedAircraft: null }),
+
+  clearSelection: () => set({ selectedAircraft: null, selectedAirport: null }),
 
   setViewState: (viewState) => set({ viewState }),
+  
+  setFlyToTarget: (target) => set({ flyToTarget: target }),
 
   setBoundingBox: (boundingBox) => set({ boundingBox }),
 
@@ -87,7 +105,7 @@ const useFlightStore = create((set, get) => ({
     const { aircraft } = get();
     const found = aircraft.find((a) => a.icao24 === icao24);
     if (found) {
-      set({ selectedAircraft: found });
+      set({ selectedAircraft: found, selectedAirport: null });
     }
   },
 

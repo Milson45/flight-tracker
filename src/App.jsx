@@ -15,6 +15,7 @@
 import React from 'react';
 import MapViewport from './components/MapViewport';
 import FlightSidebar from './components/FlightSidebar';
+import AirportSidebar from './components/AirportSidebar';
 import FR24Layout from './components/FR24Layout';
 import useAircraftData from './hooks/useAircraftData';
 
@@ -34,6 +35,9 @@ export default function App() {
 
       {/* Flight sidebar rendered on top when aircraft is selected */}
       <FlightSidebar />
+      
+      {/* Airport sidebar rendered on top when an airport is selected */}
+      <AirportSidebar />
     </>
   );
 }

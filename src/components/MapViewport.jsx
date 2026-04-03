@@ -82,6 +82,24 @@ export default function MapViewport() {
     }
   }, [selectedAircraft]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const flyToTarget = useFlightStore((s) => s.flyToTarget);
+  const setFlyToTarget = useFlightStore((s) => s.setFlyToTarget);
+
+  useEffect(() => {
+    if (flyToTarget && mapRef.current) {
+      const map = mapRef.current.getMap();
+      map.flyTo({
+        center: [flyToTarget.longitude, flyToTarget.latitude],
+        zoom: flyToTarget.zoom || Math.max(viewState.zoom, 9),
+        speed: 1.5,
+        essential: true,
+      });
+      // Clear after initiating fly-to to prevent re-triggering loops
+      const timeout = setTimeout(() => setFlyToTarget(null), 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [flyToTarget, setFlyToTarget, viewState.zoom]);
+
   // Set initial bounding box once the map loads
   const onLoad = useCallback(() => {
     updateBoundingBox();
