@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useFlightStore from '../store/flightStore';
 import './FR24Layout.css';
 
@@ -7,6 +7,38 @@ export default function FR24Layout() {
   const [expandedPanel, setExpandedPanel] = useState('tracked');
   const [activeTab, setActiveTab] = useState('Aircraft');
   
+  // Real-time UTC clock
+  const [utcTime, setUtcTime] = useState('');
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hh = String(now.getUTCHours()).padStart(2, '0');
+      const mm = String(now.getUTCMinutes()).padStart(2, '0');
+      setUtcTime(`${hh}:${mm} UTC`);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 60000); // update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  // Search logic
+  const [searchQuery, setSearchQuery] = useState('');
+  const aircraftList = useFlightStore(s => s.aircraft);
+  const selectAircraftByIcao = useFlightStore(s => s.selectAircraftByIcao);
+  
+  const searchResults = searchQuery.length > 1 
+    ? aircraftList.filter(a => 
+        (a.callsign && a.callsign.toUpperCase().includes(searchQuery.toUpperCase())) ||
+        (a.registration && a.registration.toUpperCase().includes(searchQuery.toUpperCase())) ||
+        (a.icao24 && a.icao24.toUpperCase().includes(searchQuery.toUpperCase()))
+      ).slice(0, 5) // cap at 5 results
+    : [];
+
+  const handleSelectResult = (icao) => {
+    selectAircraftByIcao(icao);
+    setSearchQuery('');
+  };
+
   const filters = useFlightStore(s => s.filters);
   const setFilters = useFlightStore(s => s.setFilters);
 
@@ -119,10 +151,36 @@ export default function FR24Layout() {
         </div>
         
         <div className="fr24-header-right">
-          <div className="fr24-time">08:22 UTC</div>
-          <div className="fr24-search">
+          <div className="fr24-time">{utcTime}</div>
+          <div className="fr24-search" style={{ position: 'relative' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" placeholder="Find flights, airports and more" />
+            <input 
+              type="text" 
+              placeholder="Find flights, airports and more" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchResults.length > 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', color: '#333', borderRadius: '4px', marginTop: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+                {searchResults.map(res => (
+                  <div 
+                    key={res.icao24}
+                    onClick={() => handleSelectResult(res.icao24)}
+                    style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                  >
+                    <span style={{ fontWeight: '600' }}>{res.callsign || res.registration || 'Unknown'}</span>
+                    <span style={{ color: '#64748b' }}>{res.aircraftType}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {searchQuery.length > 1 && searchResults.length === 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', color: '#666', borderRadius: '4px', marginTop: '4px', padding: '8px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                No active flights found.
+              </div>
+            )}
           </div>
           <div className="fr24-login">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
