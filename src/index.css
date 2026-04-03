@@ -1,0 +1,201 @@
+/* ============================================================
+   SkyMap Design System — Global Styles
+   
+   WHY: We define a full design token system here so every
+   component can reference consistent colors, spacing, and
+   typography without ad-hoc values scattered across files.
+   ============================================================ */
+
+:root {
+  /* —— Color Palette —— */
+  --bg-deep: #0f172a;           /* Deep navy — primary background */
+  --bg-surface: rgba(15, 23, 42, 0.85);  /* Translucent panel background */
+  --bg-surface-hover: rgba(30, 41, 59, 0.9);
+  --bg-glass: rgba(15, 23, 42, 0.82);     /* Glassmorphism panels — higher opacity for light map */
+  --bg-glass-heavy: rgba(15, 23, 42, 0.92);
+
+  --accent-cyan: #06b6d4;       /* Primary accent — selections, highlights */
+  --accent-cyan-glow: rgba(6, 182, 212, 0.3);
+  --accent-green: #4ade80;      /* Radar green — status indicators */
+  --accent-green-glow: rgba(74, 222, 128, 0.3);
+  --accent-amber: #fbbf24;      /* Warning / low altitude */
+  --accent-red: #ef4444;        /* Error / on-ground */
+
+  --text-primary: #f8fafc;      /* Off-white — headings, key data */
+  --text-secondary: #cbd5e1;    /* Light grey — body text */
+  --text-muted: #94a3b8;        /* Muted grey — labels, captions */
+  --text-dim: #64748b;          /* Very dim — disabled states */
+
+  --border-subtle: rgba(148, 163, 184, 0.15);
+  --border-accent: rgba(6, 182, 212, 0.4);
+
+  /* —— Spacing Scale —— */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+
+  /* —— Typography —— */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  --text-xs: 0.7rem;
+  --text-sm: 0.8rem;
+  --text-base: 0.9rem;
+  --text-lg: 1.05rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+
+  /* —— Effects —— */
+  --blur-md: blur(12px);
+  --blur-lg: blur(20px);
+  --blur-xl: blur(32px);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--border-subtle);
+  --shadow-glow-cyan: 0 0 20px var(--accent-cyan-glow), 0 0 60px rgba(6, 182, 212, 0.15);
+  --shadow-glow-green: 0 0 20px var(--accent-green-glow);
+
+  /* —— Transitions —— */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 150ms var(--ease-out-expo);
+  --transition-normal: 300ms var(--ease-out-expo);
+  --transition-slow: 500ms var(--ease-out-expo);
+
+  /* —— Z-Index Scale —— */
+  --z-map: 0;
+  --z-overlay: 10;
+  --z-panel: 20;
+  --z-sidebar: 30;
+  --z-modal: 40;
+  --z-tooltip: 50;
+
+  /* —— Border Radius —— */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   Scrollbar Styling — Sleek thin scrollbars for panels
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-dim);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ============================================================
+   Utility Classes
+   ============================================================ */
+.mono {
+  font-family: var(--font-mono);
+}
+
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
+}
+
+.glass-panel-heavy {
+  background: var(--bg-glass-heavy);
+  backdrop-filter: var(--blur-xl);
+  -webkit-backdrop-filter: var(--blur-xl);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
+}
+
+/* ============================================================
+   Animations
+   ============================================================ */
+@keyframes pulse-cyan {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-cyan-glow); }
+  50% { box-shadow: 0 0 0 12px transparent; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-in-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes float-in {
+  from { transform: translateY(8px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* ============================================================
+   Mapbox GL Overrides — Clean up default Mapbox UI
+   ============================================================ */
+.mapboxgl-ctrl-logo {
+  opacity: 0.3 !important;
+}
+
+.mapboxgl-ctrl-attrib {
+  opacity: 0.3 !important;
+  font-size: 9px !important;
+}
+
+.mapboxgl-ctrl-attrib a {
+  color: var(--text-dim) !important;
+}
+
+/* Hide default zoom controls — we use our own UI */
+.mapboxgl-ctrl-group {
+  display: none !important;
+}
