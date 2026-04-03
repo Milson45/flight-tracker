@@ -19,10 +19,10 @@ import './MapViewport.css';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-// Dark map style matching the provided reference screenshot.
-// WHY dark-v11: Provides a dark grey topographic feel with dark water,
-// perfectly contrasting the bright yellow "swarm" markers.
-const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
+// Colorful, standard streets view closer to Google Maps.
+// WHY streets-v12: User explicitly requested a bright, colorful map
+// instead of the darker, topographically heavy dark-mode maps.
+const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12';
 
 export default function MapViewport() {
   const mapRef = useRef(null);
