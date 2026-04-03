@@ -20,7 +20,10 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { Source, Layer } from 'react-map-gl';
 import useFlightStore from '../store/flightStore';
 import { interpolateAllToGeoJSON } from '../utils/interpolation';
-import aircraftSvgUrl from '../assets/aircraft.svg';
+import lightSvg from '../assets/aircraft-light.svg';
+import largeSvg from '../assets/aircraft-large.svg';
+import heavySvg from '../assets/aircraft-heavy.svg';
+import heliSvg from '../assets/aircraft-heli.svg';
 
 export default function AircraftLayer({ mapRef }) {
   const aircraft = useFlightStore((s) => s.aircraft);
@@ -30,38 +33,46 @@ export default function AircraftLayer({ mapRef }) {
 
   const [geoJsonData, setGeoJsonData] = useState(null);
   const animationRef = useRef(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Load the custom airplane SVG as a Mapbox image
-  // WHY: Mapbox symbol layers reference images by name. We need to
-  // register our SVG as 'aircraft-icon' before the layer can use it.
+  // Load custom airplane SVGs as Mapbox images
   useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    const loadImage = () => {
-      if (map.hasImage('aircraft-icon')) {
-        setImageLoaded(true);
-        return;
-      }
+    const loadImages = async () => {
+      const icons = [
+        { name: 'aircraft-light', url: lightSvg },
+        { name: 'aircraft-large', url: largeSvg },
+        { name: 'aircraft-heavy', url: heavySvg },
+        { name: 'aircraft-heli', url: heliSvg },
+      ];
 
-      const img = new Image(64, 64);
-      img.onload = () => {
-        if (!map.hasImage('aircraft-icon')) {
-          map.addImage('aircraft-icon', img, { sdf: true });
-          // WHY sdf: true: Signed Distance Field rendering lets us
-          // recolor the icon dynamically via icon-color property.
-          // Without SDF, the icon color is baked into the image.
-        }
-        setImageLoaded(true);
-      };
-      img.src = aircraftSvgUrl;
+      const promises = icons.map((icon) => {
+        return new Promise((resolve) => {
+          if (map.hasImage(icon.name)) {
+            resolve();
+            return;
+          }
+          const img = new Image(64, 64);
+          img.onload = () => {
+            if (!map.hasImage(icon.name)) {
+              map.addImage(icon.name, img);
+            }
+            resolve();
+          };
+          img.src = icon.url;
+        });
+      });
+
+      await Promise.all(promises);
+      setImagesLoaded(true);
     };
 
     if (map.loaded()) {
-      loadImage();
+      loadImages();
     } else {
-      map.on('load', loadImage);
+      map.on('load', loadImages);
     }
   }, [mapRef]);
 
@@ -133,37 +144,80 @@ export default function AircraftLayer({ mapRef }) {
     };
   }, [mapRef, selectAircraftByIcao]);
 
-  if (!imageLoaded || !geoJsonData) return null;
+  // Handle cluster click — zoom into the cluster
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    const handleClusterClick = (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['aircraft-clusters'],
+      });
+      if (!features.length) return;
+
+      const clusterId = features[0].properties.cluster_id;
+      const source = map.getSource('aircraft-source');
+      source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return;
+        map.easeTo({
+          center: features[0].geometry.coordinates,
+          zoom: Math.min(zoom, 14),
+          duration: 500,
+        });
+      });
+    };
+
+    const handleClusterEnter = () => {
+      map.getCanvas().style.cursor = 'pointer';
+    };
+    const handleClusterLeave = () => {
+      map.getCanvas().style.cursor = '';
+    };
+
+    map.on('click', 'aircraft-clusters', handleClusterClick);
+    map.on('mouseenter', 'aircraft-clusters', handleClusterEnter);
+    map.on('mouseleave', 'aircraft-clusters', handleClusterLeave);
+
+    return () => {
+      map.off('click', 'aircraft-clusters', handleClusterClick);
+      map.off('mouseenter', 'aircraft-clusters', handleClusterEnter);
+      map.off('mouseleave', 'aircraft-clusters', handleClusterLeave);
+    };
+  }, [mapRef]);
+
+  if (!imagesLoaded || !geoJsonData) return null;
 
   return (
     <>
-      {/* Main aircraft data source — GeoJSON FeatureCollection */}
-      <Source id="aircraft-source" type="geojson" data={geoJsonData}>
-        {/* 
-          Symbol layer for aircraft icons.
-          WHY symbol layer: GPU-rendered, supports rotation, color interpolation,
-          and collision detection. Far more performant than HTML markers.
-        */}
+      {/* Main aircraft data source.
+          We rely on Mapbox GL's native collision detection
+          (icon-allow-overlap: false) to naturally show a 
+          sparsely sampled set of aircraft when zoomed out, 
+          revealing more as the user zooms in. */}
+      <Source
+        id="aircraft-source"
+        type="geojson"
+        data={geoJsonData}
+      >
         <Layer
           id="aircraft-symbols"
           type="symbol"
           layout={{
-            'icon-image': 'aircraft-icon',
+            'icon-image': ['get', 'iconType'],
             'icon-size': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.3,    // Very small at world view
-              6, 0.45,   // Medium at regional view
-              10, 0.65,  // Larger when zoomed in
-              14, 0.85,
+              3, 0.25,
+              6, 0.35,
+              10, 0.5,
+              14, 0.8,
             ],
-            // WHY icon-rotate: Rotates each airplane to point in its
-            // direction of travel. The SVG points north (0°), and
-            // true_track is degrees clockwise from north.
             'icon-rotate': ['get', 'trueTrack'],
             'icon-rotation-alignment': 'map',
+            // WHY true: FlightRadar24 creates massive "swarms" of overlapping
+            // yellow planes in dense areas. Allowing overlap stops Mapbox from
+            // dynamically hiding markers to keep things clean.
             'icon-allow-overlap': true,
             'icon-ignore-placement': true,
-            // Show callsign label at higher zoom levels
             'text-field': ['step', ['zoom'], '', 8, ['get', 'callsign']],
             'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
             'text-size': 10,
@@ -172,19 +226,6 @@ export default function AircraftLayer({ mapRef }) {
             'text-optional': true,
           }}
           paint={{
-            // WHY altitude-based color: The spec requires visual hierarchy
-            // using color gradients — yellow for low, transitioning to blue for high.
-            'icon-color': [
-              'interpolate',
-              ['linear'],
-              ['coalesce', ['get', 'altitude'], 0],
-              0, '#ef4444',       // Red — ground
-              500, '#fbbf24',     // Amber — very low
-              3000, '#f59e0b',    // Orange — low
-              6000, '#06b6d4',    // Cyan — medium
-              9000, '#0ea5e9',    // Sky blue — high
-              12000, '#6366f1',   // Indigo — cruise
-            ],
             'icon-opacity': 0.9,
             'text-color': '#94a3b8',
             'text-halo-color': 'rgba(15, 23, 42, 0.8)',
@@ -215,7 +256,6 @@ export default function AircraftLayer({ mapRef }) {
             ],
           }}
         >
-          {/* Pulsing ring around the selected aircraft */}
           <Layer
             id="selected-aircraft-pulse"
             type="circle"

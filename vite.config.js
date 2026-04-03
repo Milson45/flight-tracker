@@ -2,107 +2,79 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 /* ============================================================
-   Custom Vite Plugin: OpenSky Caching Proxy
+   Custom Vite Plugin: adsb.lol Caching Proxy
    
-   WHY: The OpenSky free API aggressively rate-limits (~100 req/day
-   unauthenticated). A simple pass-through proxy hits 429 errors
-   within minutes. This caching proxy solves it by:
+   WHY proxy: adsb.lol blocks browser requests with CORS.
+   This proxy routes /api/adsb/* through the Vite dev server,
+   making requests server-side (no CORS restrictions).
    
-   1. Caching successful responses for 10 seconds (matches poll interval)
-   2. Serving STALE cached data when rate-limited (429) or on errors
-   3. Deduplicating concurrent requests (only 1 in-flight at a time)
-   
-   Result: The user ALWAYS sees aircraft data — either fresh or
-   slightly stale — and the API is hit at most once per 10 seconds.
+   Also caches responses for 5 seconds to prevent excessive
+   requests during rapid map panning.
    ============================================================ */
-function openskyProxyPlugin() {
-  // In-memory cache: stores the last successful API response
-  let cache = {
-    data: null,
-    timestamp: 0,
-  };
-
-  // Prevent multiple simultaneous requests to OpenSky
-  let inFlightRequest = null;
-
-  const CACHE_TTL_MS = 10000; // 10 seconds — matches the polling interval
+function adsbProxyPlugin() {
+  const cacheMap = new Map();
+  const inFlightRequests = new Map();
+  const CACHE_TTL_MS = 5000; // 5 seconds — adsb.lol updates frequently
 
   return {
-    name: 'opensky-caching-proxy',
+    name: 'adsb-caching-proxy',
     configureServer(server) {
-      // This middleware intercepts all /api/opensky/* requests
-      // BEFORE they reach the default Vite proxy
-      server.middlewares.use('/api/opensky', async (req, res) => {
-        const incomingUrl = new URL(req.url, 'http://localhost');
-        const queryString = incomingUrl.search;
+      server.middlewares.use('/api/adsb', async (req, res) => {
+        // req.url will be like /v2/lat/47.37/lon/8.54/dist/250
+        const path = req.url;
 
-        // 1. Check if cache is fresh enough
+        // Check cache for this specific path
+        const cache = cacheMap.get(path) || { data: null, timestamp: 0 };
         const cacheAge = Date.now() - cache.timestamp;
+        
         if (cache.data && cacheAge < CACHE_TTL_MS) {
-          console.log(`[OpenSky Proxy] Cache HIT (age: ${Math.round(cacheAge / 1000)}s)`);
+          console.log(`[adsb.lol Proxy] Cache HIT (age: ${Math.round(cacheAge / 1000)}s) for ${path}`);
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('X-Cache', 'HIT');
           res.end(JSON.stringify(cache.data));
           return;
         }
 
-        // 2. If another request is already in-flight, wait for it
-        //    then serve whatever we have (fresh or stale)
+        // Deduplicate concurrent requests for the exact same path
+        let inFlightRequest = inFlightRequests.get(path);
         if (inFlightRequest) {
-          console.log('[OpenSky Proxy] Waiting for in-flight request...');
-          try {
-            await inFlightRequest;
-          } catch (e) {
-            // In-flight failed, but we might still have stale cache
-          }
-          if (cache.data) {
+          try { await inFlightRequest; } catch (e) { /* ignore */ }
+          const dedupCache = cacheMap.get(path);
+          if (dedupCache && dedupCache.data) {
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('X-Cache', 'DEDUP');
-            res.end(JSON.stringify(cache.data));
+            res.end(JSON.stringify(dedupCache.data));
             return;
           }
         }
 
-        // 3. Make a fresh request to OpenSky
-        const apiUrl = `https://opensky-network.org/api/states/all${queryString}`;
-        console.log(`[OpenSky Proxy] Fetching from API: ${apiUrl}`);
+        const apiUrl = `https://api.adsb.lol${path}`;
+        console.log(`[adsb.lol Proxy] Fetching: ${apiUrl}`);
 
         inFlightRequest = (async () => {
           try {
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+            const timeout = setTimeout(() => controller.abort(), 15000);
 
             const response = await fetch(apiUrl, {
               signal: controller.signal,
-              headers: {
-                'User-Agent': 'SkyMap-FlightTracker/1.0',
-              },
+              headers: { 'User-Agent': 'SkyMap-FlightTracker/1.0' },
             });
             clearTimeout(timeout);
 
             if (response.ok) {
               const data = await response.json();
-              cache = { data, timestamp: Date.now() };
-              console.log(`[OpenSky Proxy] Cache MISS — fetched ${data.states?.length || 0} aircraft`);
+              cacheMap.set(path, { data, timestamp: Date.now() });
+              const count = data.ac?.length || 0;
+              console.log(`[adsb.lol Proxy] Fetched ${count} aircraft`);
               res.setHeader('Content-Type', 'application/json');
               res.setHeader('X-Cache', 'MISS');
               res.end(JSON.stringify(data));
               return;
             }
 
-            // Rate limited (429) — serve stale cache if available
-            if (response.status === 429) {
-              console.warn('[OpenSky Proxy] Rate limited (429) — serving stale cache');
-              if (cache.data) {
-                res.setHeader('Content-Type', 'application/json');
-                res.setHeader('X-Cache', 'STALE');
-                res.end(JSON.stringify(cache.data));
-                return;
-              }
-            }
-
-            // Other API errors — still try stale cache
-            console.warn(`[OpenSky Proxy] API error ${response.status} — serving stale cache`);
+            // Rate limited or error — serve stale cache if available
+            console.warn(`[adsb.lol Proxy] API error ${response.status}`);
             if (cache.data) {
               res.setHeader('Content-Type', 'application/json');
               res.setHeader('X-Cache', 'STALE');
@@ -111,13 +83,10 @@ function openskyProxyPlugin() {
             }
 
             res.statusCode = response.status;
-            res.end(`OpenSky API error: ${response.status}`);
-
+            res.end(`adsb.lol API error: ${response.status}`);
           } catch (err) {
-            console.error('[OpenSky Proxy] Network error:', err.message);
-            // Network failure — serve stale cache
+            console.error('[adsb.lol Proxy] Network error:', err.message);
             if (cache.data) {
-              console.log('[OpenSky Proxy] Serving stale cache after network error');
               res.setHeader('Content-Type', 'application/json');
               res.setHeader('X-Cache', 'STALE');
               res.end(JSON.stringify(cache.data));
@@ -128,10 +97,12 @@ function openskyProxyPlugin() {
           }
         })();
 
+        inFlightRequests.set(path, inFlightRequest);
+
         try {
           await inFlightRequest;
         } finally {
-          inFlightRequest = null;
+          inFlightRequests.delete(path);
         }
       });
     },
@@ -140,13 +111,11 @@ function openskyProxyPlugin() {
 
 export default defineConfig({
   plugins: [
-    openskyProxyPlugin(), // Must be before react() so middleware registers first
+    adsbProxyPlugin(),
     react(),
   ],
   server: {
     port: 5173,
     open: false,
-    // NOTE: The proxy config below is now a fallback — the custom plugin
-    // middleware intercepts /api/opensky requests first with caching.
   },
 });

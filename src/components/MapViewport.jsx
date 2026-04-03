@@ -19,10 +19,10 @@ import './MapViewport.css';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-// Standard streets map style with natural default coloring.
-// WHY streets-v12: Provides a clean, familiar map with terrain,
-// road hierarchy, and readable labels at all zoom levels.
-const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12';
+// Dark map style matching the provided reference screenshot.
+// WHY dark-v11: Provides a dark grey topographic feel with dark water,
+// perfectly contrasting the bright yellow "swarm" markers.
+const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
 
 export default function MapViewport() {
   const mapRef = useRef(null);

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Fuselage -->
+  <path d="M32 6 L34 24 L34 44 L33 54 L32 58 L31 54 L30 44 L30 24 Z" fill="#facc15" stroke="#0f172a" stroke-width="2" stroke-linejoin="round" />
+  <!-- Wings (Straight) -->
+  <path d="M30 28 L12 28 L12 33 L30 33 Z" fill="#facc15" stroke="#0f172a" stroke-width="2" stroke-linejoin="round" />
+  <path d="M34 28 L52 28 L52 33 L34 33 Z" fill="#facc15" stroke="#0f172a" stroke-width="2" stroke-linejoin="round" />
+  <!-- Tail wings (Straight) -->
+  <path d="M31 48 L22 48 L22 51 L31 51 Z" fill="#facc15" stroke="#0f172a" stroke-width="2" stroke-linejoin="round" />
+  <path d="M33 48 L42 48 L42 51 L33 51 Z" fill="#facc15" stroke="#0f172a" stroke-width="2" stroke-linejoin="round" />
+</svg>

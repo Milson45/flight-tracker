@@ -15,9 +15,7 @@
 import React from 'react';
 import MapViewport from './components/MapViewport';
 import FlightSidebar from './components/FlightSidebar';
-import ControlPanel from './components/ControlPanel';
-import SearchBar from './components/SearchBar';
-import StatusBar from './components/StatusBar';
+import FR24Layout from './components/FR24Layout';
 import useAircraftData from './hooks/useAircraftData';
 
 export default function App() {
@@ -31,11 +29,11 @@ export default function App() {
       {/* Full-screen map — always rendered as the base layer */}
       <MapViewport />
 
-      {/* Floating UI overlays — layered over the map */}
-      <SearchBar />
-      <ControlPanel />
+      {/* New integrated Flightradar24-style UI layout */}
+      <FR24Layout />
+
+      {/* Flight sidebar rendered on top when aircraft is selected */}
       <FlightSidebar />
-      <StatusBar />
     </>
   );
 }

@@ -100,6 +100,7 @@ export function interpolateAllToGeoJSON(aircraft, elapsedMs) {
           onGround: a.onGround,
           geoAltitude: a.geoAltitude,
           squawk: a.squawk,
+          iconType: a.iconType || 'aircraft-large',
         },
       };
     }),
