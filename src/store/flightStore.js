@@ -11,17 +11,19 @@
 import { create } from 'zustand';
 
 const useFlightStore = create((set, get) => ({
-  // —— Aircraft State ——
-  // Raw array of aircraft objects from the last API poll
-  aircraft: [],
-  // Timestamp of the last successful data fetch (for interpolation timing)
-  lastFetchTime: null,
-  // Whether we're using mock data due to API rate limits
-  isDemo: false,
+  // —— Domain Mode ——
+  // 'aviation' deals with ADS-B flight telemetry
+  // 'maritime' deals with AIS oceanic telemetry
+  domainMode: 'aviation',
 
-  // —— Selection State ——
-  // The currently selected aircraft object, or null
+  // —— Aviation State ——
+  aircraft: [],
   selectedAircraft: null,
+  
+  // —— Maritime State ——
+  vessels: [],
+  selectedVessel: null,
+  
   // The currently selected airport object { iata, city }, or null
   selectedAirport: null,
 
@@ -35,31 +37,33 @@ const useFlightStore = create((set, get) => ({
     pitch: 30,           // Slight pitch for that 3D avionics feel
   },
   
-  // A transient target to force the map to pan to specific coordinates (e.g., from an airport search)
+  // A transient target to force the map to pan to specific coordinates
   flyToTarget: null,
 
-  // —— Bounding Box ——
-  // Computed from the current map viewport corners.
-  // WHY: We pass this to the OpenSky API so we only fetch aircraft
-  // visible on screen, not the entire globe (~10K+ aircraft).
+  // —— Shared Tracking Elements ——
   boundingBox: null,
-
-  // —— Filters & Toggles ——
+  lastFetchTime: null,
+  isDemo: false,
   filters: {
-    minAltitude: 0,       // Meters — filter out aircraft below this
-    showOnGround: false,  // Toggle ground traffic visibility
+    minAltitude: 0,
+    showOnGround: false,
   },
-
-  // —— User Session ——
   user: null,
-  isAuthLoading: true, // While checking Firebase on initial load
-  
-  // —— Connection Status ——
-  connectionStatus: 'connecting', // 'connected' | 'connecting' | 'error' | 'demo'
+  isAuthLoading: true,
+  connectionStatus: 'connecting',
   aircraftCount: 0,
+  vesselCount: 0,
   errorMessage: null,
 
   // —— Actions ——
+  
+  setDomainMode: (mode) => set({
+    domainMode: mode,
+    selectedAircraft: null,
+    selectedVessel: null,
+    selectedAirport: null,
+    // When swapping modes, flush the opposing buffer so things don't ghost
+  }),
 
   setUser: (user) => set({
     user,
@@ -71,17 +75,23 @@ const useFlightStore = create((set, get) => ({
     aircraftCount: aircraft.length,
     lastFetchTime: Date.now(),
   }),
+  
+  setVessels: (vessels) => set({
+    vessels,
+    vesselCount: vessels.length,
+    lastFetchTime: Date.now(),
+  }),
 
   setIsDemo: (isDemo) => set({
     isDemo,
     connectionStatus: isDemo ? 'demo' : 'connected',
   }),
 
-  selectAircraft: (aircraft) => set({ selectedAircraft: aircraft, selectedAirport: null }),
+  selectAircraft: (aircraft) => set({ selectedAircraft: aircraft, selectedAirport: null, selectedVessel: null }),
+  selectVessel: (vessel) => set({ selectedVessel: vessel, selectedAircraft: null, selectedAirport: null }),
+  selectAirport: (airport) => set({ selectedAirport: airport, selectedAircraft: null, selectedVessel: null }),
 
-  selectAirport: (airport) => set({ selectedAirport: airport, selectedAircraft: null }),
-
-  clearSelection: () => set({ selectedAircraft: null, selectedAirport: null }),
+  clearSelection: () => set({ selectedAircraft: null, selectedAirport: null, selectedVessel: null }),
 
   setViewState: (viewState) => set({ viewState }),
   
@@ -98,14 +108,11 @@ const useFlightStore = create((set, get) => ({
     errorMessage,
   }),
 
-  // WHY: When the user clicks an aircraft, we want to update the
-  // selected state AND trigger a fly-to animation. This helper
-  // finds the aircraft by ICAO24 hex code from the current array.
   selectAircraftByIcao: (icao24) => {
     const { aircraft } = get();
     const found = aircraft.find((a) => a.icao24 === icao24);
     if (found) {
-      set({ selectedAircraft: found, selectedAirport: null });
+      set({ selectedAircraft: found, selectedAirport: null, selectedVessel: null });
     }
   },
 

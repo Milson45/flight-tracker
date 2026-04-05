@@ -16,14 +16,17 @@ import React from 'react';
 import MapViewport from './components/MapViewport';
 import FlightSidebar from './components/FlightSidebar';
 import AirportSidebar from './components/AirportSidebar';
+import VesselSidebar from './components/VesselSidebar';
 import FR24Layout from './components/FR24Layout';
 import useAircraftData from './hooks/useAircraftData';
+import useVesselData from './hooks/useVesselData';
 
 export default function App() {
   // Initialize the data polling orchestration at the root level
   // WHY here: Needs to run once, and the hook reads/writes to the
   // Zustand store which all child components subscribe to.
   useAircraftData();
+  useVesselData();
 
   return (
     <>
@@ -38,6 +41,9 @@ export default function App() {
       
       {/* Airport sidebar rendered on top when an airport is selected */}
       <AirportSidebar />
+      
+      {/* Vessel sidebar rendered on top when a vessel is selected in maritime mode */}
+      <VesselSidebar />
     </>
   );
 }

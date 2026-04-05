@@ -15,6 +15,7 @@ import React, { useCallback, useRef, useEffect } from 'react';
 import Map from 'react-map-gl';
 import useFlightStore from '../store/flightStore';
 import AircraftLayer from './AircraftLayer';
+import VesselLayer from './VesselLayer';
 import './MapViewport.css';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -30,6 +31,8 @@ export default function MapViewport() {
   const setViewState = useFlightStore((s) => s.setViewState);
   const setBoundingBox = useFlightStore((s) => s.setBoundingBox);
   const selectedAircraft = useFlightStore((s) => s.selectedAircraft);
+  const selectedVessel = useFlightStore((s) => s.selectedVessel);
+  const domainMode = useFlightStore((s) => s.domainMode);
 
   /**
    * Calculate the visible bounding box from the map's current viewport.
@@ -67,20 +70,19 @@ export default function MapViewport() {
     updateBoundingBox();
   }, [updateBoundingBox]);
 
-  // Fly-to animation when an aircraft is selected
-  // WHY eased animation: The spec requires "slow, eased fly-to"
-  // to center the plane when selected.
+  // Fly-to animation when an aircraft or vessel is selected
   useEffect(() => {
-    if (selectedAircraft && mapRef.current) {
+    const target = domainMode === 'aviation' ? selectedAircraft : selectedVessel;
+    if (target && mapRef.current) {
       const map = mapRef.current.getMap();
       map.flyTo({
-        center: [selectedAircraft.longitude, selectedAircraft.latitude],
+        center: [target.longitude, target.latitude],
         zoom: Math.max(viewState.zoom, 7),
         duration: 1500,
         essential: true,
       });
     }
-  }, [selectedAircraft]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedAircraft, selectedVessel, domainMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const flyToTarget = useFlightStore((s) => s.flyToTarget);
   const setFlyToTarget = useFlightStore((s) => s.setFlyToTarget);
@@ -124,7 +126,8 @@ export default function MapViewport() {
         projection={{ name: 'mercator' }}
         style={{ width: '100%', height: '100%' }}
       >
-        <AircraftLayer mapRef={mapRef} />
+        {domainMode === 'aviation' && <AircraftLayer mapRef={mapRef} />}
+        {domainMode === 'maritime' && <VesselLayer />}
       </Map>
     </div>
   );

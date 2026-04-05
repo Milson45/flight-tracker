@@ -274,9 +274,25 @@ export default function FR24Layout() {
         </div>
       </div>
       
-      <div className="fr24-view-toggle">
-        VIEW <span style={{ color: '#eab308' }}>Map</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+      <div className="fr24-view-toggle" style={{ display: 'flex', gap: '4px', padding: '4px', background: 'rgba(15, 23, 42, 0.9)', borderRadius: '8px', alignItems: 'center' }}>
+        <button 
+          onClick={() => useFlightStore.getState().setDomainMode('aviation')}
+          style={{ 
+            background: useFlightStore(s => s.domainMode === 'aviation') ? '#3b82f6' : 'transparent', 
+            color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px'
+          }}
+        >
+          ✈️ Flights
+        </button>
+        <button 
+          onClick={() => useFlightStore.getState().setDomainMode('maritime')}
+          style={{ 
+            background: useFlightStore(s => s.domainMode === 'maritime') ? '#0ea5e9' : 'transparent', 
+            color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px'
+          }}
+        >
+          🚢 Vessels
+        </button>
       </div>
 
       {/* BOTTOM PILL MENU */}
